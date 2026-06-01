@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Frog Census — Victoria</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: sans-serif; }
+    #map { width: 100vw; height: 100vh; }
+    .legend {
+      background: white;
+      padding: 10px 14px;
+      border-radius: 6px;
+      box-shadow: 0 1px 5px rgba(0,0,0,0.3);
+      font-size: 12px;
+      max-height: 320px;
+      overflow-y: auto;
+      line-height: 1.8;
+    }
+    .legend h4 { margin-bottom: 6px; font-size: 13px; }
+    .legend-item { display: flex; align-items: center; gap: 6px; }
+    .legend-dot {
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      border: 1px solid rgba(0,0,0,0.3);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+<div id="map"></div>
+<script src="data/Frog_census_0.js"></script>
+<script>
+var map = L.map('map').setView([-37.8, 145.0], 9);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '© OpenStreetMap contributors',
+  maxZoom: 19
+}).addTo(map);
+
+var speciesColors = {
+  "Alpine Whistling Tree Frog":     "#e6194b",
+  "Brown Toadlet":                  "#3cb44b",
+  "Common Spadefoot Toad":          "#ffe119",
+  "Dendy's Toadlet":                "#4363d8",
+  "Eastern Banjo Frog":             "#f58231",
+  "Eastern Common Froglet":         "#911eb4",
+  "Eastern Dwarf Tree Frog":        "#42d4f4",
+  "Eastern Sign-bearing Froglet":   "#f032e6",
+  "Growling Grass Frog":            "#bfef45",
+  "Growling grass frog":            "#bfef45",
+  "Peron's Tree Frog":              "#fabed4",
+  "Peronâ€™s Tree Frog":           "#fabed4",
+  "Plains Brown Tree Frog":         "#469990",
+  "Red-groined Froglet":            "#dcbeff",
+  "Rocky River (Lesueur's) Frog":   "#9A6324",
+  "Southern Brown Tree Frog":       "#fffac8",
+  "Southern Leaf Green Tree Frog":  "#800000",
+  "Southern Toadlet":               "#aaffc3",
+  "Spotted Marsh Frog":             "#808000",
+  "Striped Marsh Frog":             "#ffd8b1",
+  "Tasmanian Smooth Froglet":       "#000075",
+  "Victorian Smooth Froglet":       "#a9a9a9",
+  "Whistling Tree Frog":            "#ffffff"
+};
+
+function getColor(species) {
+  return speciesColors[species] || "#888888";
+}
+
+function style(feature) {
+  return {
+    radius: 5,
+    fillColor: getColor(feature.properties.Common_nam),
+    color: "#333",
+    weight: 0.5,
+    opacity: 1,
+    fillOpacity: 0.85
+  };
+}
+
+function onEachFeature(feature, layer) {
+  var p = feature.properties;
+  var popup =
+    "<b>" + (p.Common_nam || "Unknown") + "</b><br>" +
+    "<i>" + (p.Scientific || "") + "</i><br>" +
+    "<b>Type:</b> " + (p.Type_of_ob || "") + "<br>" +
+    "<b>Date:</b> " + (p.Date || "") + "<br>" +
+    "<b>Location:</b> " + (p.Latitude || "") + ", " + (p.Longitude || "");
+  layer.bindPopup(popup);
+}
+
+var frogLayer = L.geoJSON(json_Frog_census_0, {
+  pointToLayer: function(feature, latlng) {
+    return L.circleMarker(latlng, style(feature));
+  },
+  onEachFeature: onEachFeature
+}).addTo(map);
+
+map.fitBounds(frogLayer.getBounds());
+
+// Legend
+var legend = L.control({ position: "bottomright" });
+legend.onAdd = function() {
+  var div = L.DomUtil.create("div", "legend");
+  div.innerHTML = "<h4>Species</h4>";
+  var seen = {};
+  json_Frog_census_0.features.forEach(function(f) {
+    var name = f.properties.Common_nam;
+    if (!name || seen[name]) return;
+    seen[name] = true;
+    var color = getColor(name);
+    div.innerHTML +=
+      '<div class="legend-item">' +
+      '<div class="legend-dot" style="background:' + color + '"></div>' +
+      '<span>' + name + '</span></div>';
+  });
+  return div;
+};
+legend.addTo(map);
+</script>
+</body>
+</html>
